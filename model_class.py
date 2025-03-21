@@ -37,7 +37,8 @@ class Models:
             "과적합여부": train_score - val_score
         }
 
-        if train_score < 1 and val_score < 1 and 0.01 < train_score - val_score < 0.09:
+        # 당신이 배운 기준에 맞춘 수정: 일반화 범위 완화 (0.0~0.1)
+        if train_score < 1 and 0.0 <= train_score - val_score <= 0.1:
             results["사용"] = "Y"
             results["train_mae"] = train_mae
             results["train_mse"] = train_mse
@@ -50,11 +51,16 @@ class Models:
             results["test_r2"] = test_r2
             print(f"-*** {model_name} with {scaler_name} ***-")
             print(f"훈련: {train_score:.4f}, 검증: {val_score:.4f}, 테스트: {test_score:.4f}, 과적합여부: {train_score - val_score:.4f}")
-            print("사용 가능한 모델입니다.\n")
+            print("사용 가능한 모델입니다 (일반화).\n")
         else:
             print(f"-*** {model_name} with {scaler_name} ***-")
             print(f"훈련: {train_score:.4f}, 검증: {val_score:.4f}, 테스트: {test_score:.4f}, 과적합여부: {train_score - val_score:.4f}")
-            print("사용 불가능한 모델입니다.\n")
+            if train_score - val_score < 0:
+                print("과소적합으로 사용 불가능한 모델입니다.\n")
+            elif train_score - val_score > 0.1:
+                print("과대적합으로 사용 불가능한 모델입니다.\n")
+            elif train_score >= 1:
+                print("훈련 정확도 1로 과대적합, 사용 불가능한 모델입니다.\n")
             results["사용"] = "N"
             results["train_mae"] = train_mae
             results["train_mse"] = train_mse
@@ -153,4 +159,3 @@ class Models:
                 if train_r2 > 0.7 and val_r2 > 0.7:
                     joblib.dump(best_model, f"{model_name}_{scaler_name}_final_model.pkl")
                     print(f"Saved {model_name} with {scaler_name} as final model.")
-
